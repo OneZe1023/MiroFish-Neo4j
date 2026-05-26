@@ -58,7 +58,8 @@ class LLMClient:
             "max_tokens": max_tokens,
         }
         
-        if response_format:
+        # MiniMax 不支持 response_format 参数，跳过
+        if response_format and "MiniMax" not in self.model and "minimax" not in self.model:
             kwargs["response_format"] = response_format
         
         response = self.client.chat.completions.create(**kwargs)
