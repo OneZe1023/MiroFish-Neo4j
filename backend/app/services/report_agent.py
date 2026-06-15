@@ -1392,6 +1392,43 @@ class ReportAgent:
             logger.info(t('report.outlinePlanDone', count=len(sections)))
             return outline
             
+        except ValueError as e:
+            # JSON 解析失败，尝试用更宽松的方式提取 JSON
+            logger.warning(t('report.outlinePlanFailed', error=str(e)))
+            try:
+                # 尝试从错误消息中提取 JSON
+                error_msg = str(e)
+                json_start = error_msg.find('{')
+                json_end = error_msg.rfind('}') + 1
+                if json_start >= 0 and json_end > json_start:
+                    json_str = error_msg[json_start:json_end]
+                    response = json.loads(json_str)
+                    sections = []
+                    for section_data in response.get("sections", []):
+                        sections.append(ReportSection(
+                            title=section_data.get("title", ""),
+                            content=""
+                        ))
+                    outline = ReportOutline(
+                        title=response.get("title", "模拟分析报告"),
+                        summary=response.get("summary", ""),
+                        sections=sections
+                    )
+                    outline = self._ensure_prediction_outline(outline)
+                    logger.info(t('report.outlinePlanDone', count=len(sections)))
+                    return outline
+            except Exception:
+                pass
+            # Fallback 默认大纲
+            return self._ensure_prediction_outline(ReportOutline(
+                title="未来预测报告",
+                summary="基于模拟预测的未来趋势与风险分析",
+                sections=[
+                    ReportSection(title="预测场景与核心发现"),
+                    ReportSection(title="人群行为预测分析"),
+                    ReportSection(title="趋势展望与风险提示")
+                ]
+            ))
         except Exception as e:
             logger.error(t('report.outlinePlanFailed', error=str(e)))
             # 返回默认大纲（3个章节，作为fallback）
