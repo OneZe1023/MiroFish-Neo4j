@@ -2,6 +2,8 @@
 
 [English](./README.md) | 中文
 
+<a href="https://trendshift.io/repositories/16144" target="_blank"><img src="https://trendshift.io/api/badge/repositories/16144" alt="MiroFish | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
+
 本项目基于原始开源仓库 [666ghj/MiroFish](https://github.com/666ghj/MiroFish) 进行二次开发。
 
 本版本的核心改动是：将原项目中的 Zep Cloud 图谱记忆与检索依赖替换为本地 Neo4j 后端，使项目可以使用本地图数据库完成实体关系存储、图谱检索、报告工具调用和模拟后的记忆更新，同时保留原 MiroFish 的多智能体模拟流程。

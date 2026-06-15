@@ -9,6 +9,7 @@ from typing import Optional, Dict, Any, List
 from openai import OpenAI
 
 from ..config import Config
+from .llm_rate_limit import call_llm_with_rate_limit_retry
 
 
 class LLMClient:
@@ -62,7 +63,10 @@ class LLMClient:
         if response_format and "MiniMax" not in self.model and "minimax" not in self.model:
             kwargs["response_format"] = response_format
         
-        response = self.client.chat.completions.create(**kwargs)
+        response = call_llm_with_rate_limit_retry(
+            lambda: self.client.chat.completions.create(**kwargs),
+            operation_name="LLM chat"
+        )
         content = response.choices[0].message.content
         # 部分模型（如MiniMax M2.5）会在content中包含<think>思考内容，需要移除
         content = re.sub(r'<think>[\s\S]*?</think>', '', content).strip()

@@ -22,13 +22,27 @@ from ..config import Config
 from ..utils.llm_client import LLMClient
 from ..utils.logger import get_logger
 from ..utils.locale import get_language_instruction, t
-from .zep_tools import (
-    ZepToolsService, 
-    SearchResult, 
-    InsightForgeResult, 
-    PanoramaResult,
-    InterviewResult
+from .graph_service_factory import get_graph_factory
+from .football_probability import (
+    FootballProbabilitySimulator,
+    football_prediction_to_markdown,
 )
+
+# 根据后端选择合适的工具类型
+if Config.GRAPH_BACKEND == 'neo4j':
+    from .adapters.graph_adapter import SearchResult
+    from .adapters.neo4j_search_service import Neo4jSearchService
+    # Neo4j 返回的是 dict，需要包装
+    InsightForgeResult = dict
+    PanoramaResult = dict
+    InterviewResult = dict
+else:
+    from .zep_tools import (
+        SearchResult,
+        InsightForgeResult,
+        PanoramaResult,
+        InterviewResult
+    )
 
 logger = get_logger('mirofish.report_agent')
 
@@ -592,6 +606,9 @@ PLAN_USER_PROMPT_TEMPLATE = """\
 【预测场景设定】
 我们向模拟世界注入的变量（模拟需求）：{simulation_requirement}
 
+【后端已计算的结构化预测结果】
+{computed_prediction_context}
+
 【模拟世界规模】
 - 参与模拟的实体数量: {total_nodes}
 - 实体间产生的关系数量: {total_edges}
@@ -608,6 +625,8 @@ PLAN_USER_PROMPT_TEMPLATE = """\
 
 根据预测结果，设计最合适的报告章节结构。
 
+如果上方存在足球比分概率预测结果，必须把“比分预测与概率分布”作为第一章，并在摘要中直接体现胜平负概率、最可能比分和期望进球；禁止写“缺乏实际输入数据”。
+
 【再次提醒】报告章节数量：最少2个，最多5个，内容要精炼聚焦于核心预测发现。"""
 
 # ── 章节生成 prompt ──
@@ -618,6 +637,9 @@ SECTION_SYSTEM_PROMPT_TEMPLATE = """\
 报告标题: {report_title}
 报告摘要: {report_summary}
 预测场景（模拟需求）: {simulation_requirement}
+
+后端已计算的结构化预测结果:
+{computed_prediction_context}
 
 当前要撰写的章节: {section_title}
 
@@ -887,7 +909,7 @@ class ReportAgent:
         simulation_id: str,
         simulation_requirement: str,
         llm_client: Optional[LLMClient] = None,
-        zep_tools: Optional[ZepToolsService] = None
+        zep_tools: Optional[object] = None
     ):
         """
         初始化Report Agent
@@ -904,7 +926,11 @@ class ReportAgent:
         self.simulation_requirement = simulation_requirement
         
         self.llm = llm_client or LLMClient()
-        self.zep_tools = zep_tools or ZepToolsService()
+        self.zep_tools = zep_tools or get_graph_factory().get_search_service(llm_client=llm_client)
+        self.computed_prediction = FootballProbabilitySimulator.simulate_from_simulation(
+            simulation_id=self.simulation_id,
+            simulation_requirement=self.simulation_requirement
+        )
         
         # 工具定义
         self.tools = self._define_tools()
@@ -915,6 +941,51 @@ class ReportAgent:
         self.console_logger: Optional[ReportConsoleLogger] = None
         
         logger.info(t('report.agentInitDone', graphId=graph_id, simulationId=simulation_id))
+
+    def _get_computed_prediction_context(self) -> str:
+        """Return compact JSON context for deterministic prediction results."""
+        if not self.computed_prediction:
+            return "（无结构化预测结果）"
+        compact = {
+            "kind": self.computed_prediction.get("kind"),
+            "method": self.computed_prediction.get("method"),
+            "inputs": self.computed_prediction.get("inputs"),
+            "result": self.computed_prediction.get("result"),
+            "warnings": self.computed_prediction.get("warnings", []),
+        }
+        return json.dumps(compact, ensure_ascii=False, indent=2)
+
+    def _is_computed_prediction_section(self, section: ReportSection, section_index: int) -> bool:
+        if not self.computed_prediction:
+            return False
+        title = section.title or ""
+        if section_index == 1:
+            return True
+        return any(keyword in title for keyword in ("比分", "概率分布", "胜平负", "Score", "score"))
+
+    def _ensure_prediction_outline(self, outline: ReportOutline) -> ReportOutline:
+        """Ensure football reports lead with the computed score distribution."""
+        if not self.computed_prediction:
+            return outline
+
+        prediction_title = "比分预测与概率分布"
+        sections = [s for s in outline.sections if s.title != prediction_title]
+        sections.insert(0, ReportSection(title=prediction_title))
+        outline.sections = sections[:5]
+
+        result = self.computed_prediction["result"]
+        inputs = self.computed_prediction["inputs"]
+        top_score = result["top_scores"][0]["score"] if result.get("top_scores") else "未知"
+        outline.summary = (
+            f"基于{inputs['samples']:,}次双变量泊松蒙特卡洛采样，"
+            f"{inputs['home_team']}主胜{result['win_prob']['home'] * 100:.1f}%，"
+            f"平局{result['win_prob']['draw'] * 100:.1f}%，"
+            f"{inputs['away_team']}客胜{result['win_prob']['away'] * 100:.1f}%，"
+            f"最可能比分为{top_score}。"
+        )
+        if "比分" not in outline.title and "足球" in self.simulation_requirement:
+            outline.title = "MiroFish足球比分概率模拟预测报告"
+        return outline
     
     def _define_tools(self) -> Dict[str, Dict[str, Any]]:
         """定义可用工具"""
@@ -952,6 +1023,119 @@ class ReportAgent:
                 }
             }
         }
+
+    def _tool_result_to_text(self, result: Any) -> str:
+        """将不同图数据库后端的工具结果统一转换为文本。"""
+        if hasattr(result, "to_text"):
+            return result.to_text()
+        if isinstance(result, dict):
+            if "semantic_facts" in result or "entity_insights" in result:
+                return self._format_insight_result(result)
+            if "active_facts" in result or "all_nodes" in result or "historical_facts" in result:
+                return self._format_panorama_result(result)
+            if "responses" in result and "question" in result:
+                return self._format_interview_fallback(result)
+            return json.dumps(result, ensure_ascii=False, indent=2)
+        return str(result)
+
+    def _format_insight_result(self, result: Dict[str, Any]) -> str:
+        """Format Neo4j insight dict in the same text shape expected by the frontend."""
+        text_parts = [
+            "## 未来预测深度分析",
+            f"分析问题: {result.get('query', '')}",
+            f"预测场景: {result.get('simulation_requirement', '')}",
+            "",
+            "### 预测数据统计",
+            f"- 相关预测事实: {result.get('total_facts', len(result.get('semantic_facts', [])))}条",
+            f"- 涉及实体: {result.get('total_entities', len(result.get('entity_insights', [])))}个",
+            f"- 关系链: {result.get('total_relationships', len(result.get('relationship_chains', [])))}条",
+        ]
+
+        sub_queries = result.get("sub_queries") or []
+        if sub_queries:
+            text_parts.append("\n### 分析的子问题")
+            for i, query in enumerate(sub_queries, 1):
+                text_parts.append(f"{i}. {query}")
+
+        semantic_facts = result.get("semantic_facts") or []
+        if semantic_facts:
+            text_parts.append("\n### 【关键事实】(请在报告中引用这些原文)")
+            for i, fact in enumerate(semantic_facts, 1):
+                text_parts.append(f'{i}. "{fact}"')
+
+        entities = result.get("entity_insights") or []
+        if entities:
+            text_parts.append("\n### 【核心实体】")
+            for entity in entities:
+                text_parts.append(f"- **{entity.get('name', '未知')}** ({entity.get('type', '实体')})")
+                if entity.get("summary"):
+                    text_parts.append(f'  摘要: "{entity.get("summary")}"')
+                if entity.get("related_facts") is not None:
+                    text_parts.append(f"  相关事实: {len(entity.get('related_facts') or [])}条")
+
+        chains = result.get("relationship_chains") or []
+        if chains:
+            text_parts.append("\n### 【关系链】")
+            for chain in chains:
+                text_parts.append(f"- {chain}")
+
+        return "\n".join(text_parts)
+
+    def _format_panorama_result(self, result: Dict[str, Any]) -> str:
+        """Format Neo4j panorama dict in the same text shape expected by the frontend."""
+        text_parts = [
+            "## 广度搜索结果（未来全景视图）",
+            f"查询: {result.get('query', '')}",
+            "",
+            "### 统计信息",
+            f"- 总节点数: {result.get('total_nodes', len(result.get('all_nodes', [])))}",
+            f"- 总边数: {result.get('total_edges', len(result.get('all_edges', [])))}",
+            f"- 当前有效事实: {result.get('active_count', len(result.get('active_facts', [])))}条",
+            f"- 历史/过期事实: {result.get('historical_count', len(result.get('historical_facts', [])))}条",
+        ]
+
+        active_facts = result.get("active_facts") or []
+        if active_facts:
+            text_parts.append("\n### 【当前有效事实】(模拟结果原文)")
+            for i, fact in enumerate(active_facts, 1):
+                text_parts.append(f'{i}. "{fact}"')
+
+        historical_facts = result.get("historical_facts") or []
+        if historical_facts:
+            text_parts.append("\n### 【历史/过期事实】(演变过程记录)")
+            for i, fact in enumerate(historical_facts, 1):
+                text_parts.append(f'{i}. "{fact}"')
+
+        nodes = result.get("all_nodes") or []
+        if nodes:
+            text_parts.append("\n### 【涉及实体】")
+            for node in nodes:
+                labels = node.get("labels") or []
+                entity_type = next((l for l in labels if l not in ("Entity", "Node")), node.get("attributes", {}).get("entity_type", "实体"))
+                text_parts.append(f"- **{node.get('name', '未知')}** ({entity_type})")
+
+        return "\n".join(text_parts)
+
+    def _format_interview_fallback(self, result: Dict[str, Any]) -> str:
+        """Readable fallback for Neo4j graph-context interview responses."""
+        lines = [
+            f"**采访主题:** {result.get('question', '')}",
+            f"**采访人数:** {result.get('count', 0)} / {result.get('count', 0)} 位模拟Agent",
+            "",
+            "### 采访实录",
+        ]
+        for index, response in enumerate(result.get("responses", []), 1):
+            agent = response.get("agent", f"Agent {index}")
+            summary = response.get("response", {})
+            lines.extend([
+                "",
+                f"#### 采访 #{index}: {agent}",
+                f"**{agent}** (neo4j_graph_context)",
+                "",
+                "**A:**",
+                json.dumps(summary, ensure_ascii=False, indent=2),
+            ])
+        return "\n".join(lines)
     
     def _execute_tool(self, tool_name: str, parameters: Dict[str, Any], report_context: str = "") -> str:
         """
@@ -977,7 +1161,7 @@ class ReportAgent:
                     simulation_requirement=self.simulation_requirement,
                     report_context=ctx
                 )
-                return result.to_text()
+                return self._tool_result_to_text(result)
             
             elif tool_name == "panorama_search":
                 # 广度搜索 - 获取全貌
@@ -990,7 +1174,7 @@ class ReportAgent:
                     query=query,
                     include_expired=include_expired
                 )
-                return result.to_text()
+                return self._tool_result_to_text(result)
             
             elif tool_name == "quick_search":
                 # 简单搜索 - 快速检索
@@ -1003,7 +1187,7 @@ class ReportAgent:
                     query=query,
                     limit=limit
                 )
-                return result.to_text()
+                return self._tool_result_to_text(result)
             
             elif tool_name == "interview_agents":
                 # 深度采访 - 调用真实的OASIS采访API获取模拟Agent的回答（双平台）
@@ -1013,12 +1197,13 @@ class ReportAgent:
                     max_agents = int(max_agents)
                 max_agents = min(max_agents, 10)
                 result = self.zep_tools.interview_agents(
+                    graph_id=self.graph_id,
                     simulation_id=self.simulation_id,
                     interview_requirement=interview_topic,
                     simulation_requirement=self.simulation_requirement,
                     max_agents=max_agents
                 )
-                return result.to_text()
+                return self._tool_result_to_text(result)
             
             # ========== 向后兼容的旧工具（内部重定向到新工具） ==========
             
@@ -1166,6 +1351,7 @@ class ReportAgent:
         system_prompt = f"{PLAN_SYSTEM_PROMPT}\n\n{get_language_instruction()}"
         user_prompt = PLAN_USER_PROMPT_TEMPLATE.format(
             simulation_requirement=self.simulation_requirement,
+            computed_prediction_context=self._get_computed_prediction_context(),
             total_nodes=context.get('graph_statistics', {}).get('total_nodes', 0),
             total_edges=context.get('graph_statistics', {}).get('total_edges', 0),
             entity_types=list(context.get('graph_statistics', {}).get('entity_types', {}).keys()),
@@ -1198,6 +1384,7 @@ class ReportAgent:
                 summary=response.get("summary", ""),
                 sections=sections
             )
+            outline = self._ensure_prediction_outline(outline)
             
             if progress_callback:
                 progress_callback("planning", 100, t('progress.outlinePlanComplete'))
@@ -1208,7 +1395,7 @@ class ReportAgent:
         except Exception as e:
             logger.error(t('report.outlinePlanFailed', error=str(e)))
             # 返回默认大纲（3个章节，作为fallback）
-            return ReportOutline(
+            return self._ensure_prediction_outline(ReportOutline(
                 title="未来预测报告",
                 summary="基于模拟预测的未来趋势与风险分析",
                 sections=[
@@ -1216,7 +1403,7 @@ class ReportAgent:
                     ReportSection(title="人群行为预测分析"),
                     ReportSection(title="趋势展望与风险提示")
                 ]
-            )
+            ))
     
     def _generate_section_react(
         self, 
@@ -1256,6 +1443,7 @@ class ReportAgent:
             report_title=outline.title,
             report_summary=outline.summary,
             simulation_requirement=self.simulation_requirement,
+            computed_prediction_context=self._get_computed_prediction_context(),
             section_title=section.title,
             tools_description=self._get_tools_description(),
         )
@@ -1651,20 +1839,31 @@ class ReportAgent:
                         base_progress,
                         t('progress.generatingSection', title=section.title, current=section_num, total=total_sections)
                     )
-                
-                # 生成主章节内容
-                section_content = self._generate_section_react(
-                    section=section,
-                    outline=outline,
-                    previous_sections=generated_sections,
-                    progress_callback=lambda stage, prog, msg:
-                        progress_callback(
-                            stage, 
-                            base_progress + int(prog * 0.7 / total_sections),
-                            msg
-                        ) if progress_callback else None,
-                    section_index=section_num
-                )
+
+                # 足球比分概率章节使用后端已计算结果，避免核心预测被LLM漏写。
+                if self._is_computed_prediction_section(section, section_num):
+                    section_content = football_prediction_to_markdown(self.computed_prediction)
+                    if self.report_logger:
+                        self.report_logger.log_section_content(
+                            section_title=section.title,
+                            section_index=section_num,
+                            content=section_content,
+                            tool_calls_count=0
+                        )
+                else:
+                    # 生成主章节内容
+                    section_content = self._generate_section_react(
+                        section=section,
+                        outline=outline,
+                        previous_sections=generated_sections,
+                        progress_callback=lambda stage, prog, msg:
+                            progress_callback(
+                                stage,
+                                base_progress + int(prog * 0.7 / total_sections),
+                                msg
+                            ) if progress_callback else None,
+                        section_index=section_num
+                    )
                 
                 section.content = section_content
                 generated_sections.append(f"## {section.title}\n\n{section_content}")
