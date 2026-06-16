@@ -924,12 +924,13 @@ class ReportAgent:
         self.graph_id = graph_id
         self.simulation_id = simulation_id
         self.simulation_requirement = simulation_requirement
+        self.prediction_scenario = self._derive_prediction_scenario(simulation_requirement)
         
         self.llm = llm_client or LLMClient()
         self.zep_tools = zep_tools or get_graph_factory().get_search_service(llm_client=llm_client)
         self.computed_prediction = FootballProbabilitySimulator.simulate_from_simulation(
             simulation_id=self.simulation_id,
-            simulation_requirement=self.simulation_requirement
+            simulation_requirement=self.prediction_scenario
         )
         
         # 工具定义
@@ -941,6 +942,40 @@ class ReportAgent:
         self.console_logger: Optional[ReportConsoleLogger] = None
         
         logger.info(t('report.agentInitDone', graphId=graph_id, simulationId=simulation_id))
+
+    def _derive_prediction_scenario(self, requirement: str) -> str:
+        """Strip report-writing instructions so they are not treated as simulated facts."""
+        text = (requirement or "").strip()
+        if not text:
+            return ""
+
+        report_instruction_markers = (
+            "MiroFish Report Engine",
+            "Sportsbook Trading Desk Report Generator",
+            "你的唯一职责",
+            "绝对禁止行为",
+            "输出结构",
+            "match_report",
+        )
+        marker_hits = sum(1 for marker in report_instruction_markers if marker in text)
+        if marker_hits >= 2:
+            config = FootballProbabilitySimulator._load_simulation_config(self.simulation_id)
+            snippets: List[str] = []
+            for post in config.get("event_config", {}).get("initial_posts", []) or []:
+                content = post.get("content")
+                if content:
+                    snippets.append(str(content))
+            narrative = config.get("event_config", {}).get("narrative_direction")
+            if narrative:
+                snippets.append(str(narrative))
+            topics = config.get("event_config", {}).get("hot_topics") or []
+            if topics:
+                snippets.append("Hot topics: " + ", ".join(str(topic) for topic in topics))
+            if snippets:
+                return "\n".join(snippets[:8])
+            return "足球比赛概率预测报告"
+
+        return text
 
     def _get_computed_prediction_context(self) -> str:
         """Return compact JSON context for deterministic prediction results."""
@@ -968,10 +1003,11 @@ class ReportAgent:
         if not self.computed_prediction:
             return outline
 
-        prediction_title = "比分预测与概率分布"
-        sections = [s for s in outline.sections if s.title != prediction_title]
-        sections.insert(0, ReportSection(title=prediction_title))
-        outline.sections = sections[:5]
+        outline.sections = [
+            ReportSection(title="博彩交易台概率报告"),
+            ReportSection(title="核心市场解读"),
+            ReportSection(title="交易信号与风险总结"),
+        ]
 
         result = self.computed_prediction["result"]
         inputs = self.computed_prediction["inputs"]
@@ -983,9 +1019,97 @@ class ReportAgent:
             f"{inputs['away_team']}客胜{result['win_prob']['away'] * 100:.1f}%，"
             f"最可能比分为{top_score}。"
         )
-        if "比分" not in outline.title and "足球" in self.simulation_requirement:
-            outline.title = "MiroFish足球比分概率模拟预测报告"
+        outline.title = "MiroFish足球博彩交易台概率报告"
         return outline
+
+    def _generate_computed_prediction_section(self, section: ReportSection, section_index: int) -> str:
+        """Render sportsbook report sections directly from deterministic market outputs."""
+        if section_index == 1:
+            return football_prediction_to_markdown(self.computed_prediction)
+
+        result = self.computed_prediction["result"]
+        inputs = self.computed_prediction["inputs"]
+        win_prob = result["win_prob"]
+        over_under = result.get("over_under", {})
+        btts = result.get("btts", {})
+        ah = result.get("asian_handicap", {})
+        double_chance = result.get("double_chance", {})
+        dnb = result.get("draw_no_bet", {})
+        clean_sheet = result.get("clean_sheet", {})
+        win_to_nil = result.get("win_to_nil", {})
+        correct_score = result.get("correct_score", result.get("top_scores", []))
+
+        def pct(value: float) -> str:
+            return f"{float(value) * 100:.1f}%"
+
+        if section_index == 2:
+            main_line = ah.get("-2") or ah.get("-1.5") or next(iter(ah.values()), {})
+            line_name = "-2" if "-2" in ah else ("-1.5" if "-1.5" in ah else next(iter(ah.keys()), "N/A"))
+            top_scores = "、".join(
+                f"{item['score']}（{pct(item['prob'])}）"
+                for item in correct_score[:5]
+            )
+            return "\n".join([
+                "**胜平负市场**",
+                "",
+                f"市场定价显示，{inputs['home_team']} 主胜概率为 {pct(win_prob['home'])}，平局为 {pct(win_prob['draw'])}，{inputs['away_team']} 客胜为 {pct(win_prob['away'])}。模型概率分布指向主队优势，但平局与客队爆冷仍保留尾部风险。",
+                "",
+                "**大小球市场**",
+                "",
+                f"以 2.5 球为核心盘口，Over 2.5 概率为 {pct(over_under.get('2.5', {}).get('over', 0))}，Under 2.5 概率为 {pct(over_under.get('2.5', {}).get('under', 0))}。盘口隐含概率反映总进球方向偏向 {'大球' if over_under.get('2.5', {}).get('over', 0) >= 0.5 else '小球'}。",
+                "",
+                "**亚洲让球盘**",
+                "",
+                f"主流盘口 {line_name} 下，主队打穿概率为 {pct(main_line.get('home_cover', 0))}，客队受让覆盖概率为 {pct(main_line.get('away_cover', 0))}。风险偏向于让球深盘的净胜球波动。",
+                "",
+                "**BTTS 双方进球**",
+                "",
+                f"BTTS Yes 概率为 {pct(btts.get('yes', 0))}，BTTS No 概率为 {pct(btts.get('no', 0))}。该分布用于判断弱势方是否具备破门能力。",
+                "",
+                "**Correct Score**",
+                "",
+                f"精确比分市场的 Top 概率集中在 {top_scores}。这些比分仅代表概率峰值，不应被解释为确定赛果。",
+                "",
+                "**Double Chance / DNB**",
+                "",
+                f"Double Chance：主胜或平 {pct(double_chance.get('home_or_draw', 0))}，主胜或客胜 {pct(double_chance.get('home_or_away', 0))}，平或客胜 {pct(double_chance.get('draw_or_away', 0))}。DNB 市场中，主队不败结算概率为 {pct(dnb.get('home', 0))}，客队不败结算概率为 {pct(dnb.get('away', 0))}。",
+                "",
+                "**Clean Sheet / Win To Nil**",
+                "",
+                f"主队零封概率 {pct(clean_sheet.get('home', 0))}，客队零封概率 {pct(clean_sheet.get('away', 0))}。主队 Win To Nil 概率 {pct(win_to_nil.get('home', 0))}，客队 Win To Nil 概率 {pct(win_to_nil.get('away', 0))}。",
+            ])
+
+        risk_rating = result.get("risk_rating", "Medium")
+        market_efficiency = result.get("market_efficiency", 0)
+        upset_probability = result.get("upset_probability", 0)
+        value_bets = result.get("value_bets", [])
+        value_text = "\n".join(
+            f"- {item['market']}: 模型概率 {pct(item['model_probability'])}，风险等级 {item['risk_level']}"
+            for item in value_bets
+        ) or "- 当前模型未给出明确 value bet，建议等待盘口价格确认。"
+
+        public_side = inputs["home_team"] if win_prob["home"] >= win_prob["away"] else inputs["away_team"]
+        return "\n".join([
+            "**Value / No Value**",
+            "",
+            value_text,
+            "",
+            "**Public Side**",
+            "",
+            f"热门方向集中在 {public_side}。市场定价显示公众资金更可能追随强势方，交易台需要关注热门方向过热后的让球盘价格风险。",
+            "",
+            "**Upset Risk**",
+            "",
+            f"冷门概率为 {pct(upset_probability)}。该值来自同一比分分布空间，反映弱势方直接赢球的尾部概率。",
+            "",
+            "**Volatility Interpretation**",
+            "",
+            f"风险评级为 {risk_rating}，市场效率为 {market_efficiency:.2f}。效率越高代表结果分布越集中；若盘口继续向热门方移动，风险主要来自深盘穿盘失败与低比分胜出。",
+            "",
+            "**Trading Summary**",
+            "",
+            "交易信号总结：优先以胜平负和 2.5 大小球作为核心方向，亚洲让球盘需要结合临场价格确认是否存在过热。Correct Score 仅用于尾部风险和赔付暴露管理，不应单独作为主交易方向。",
+        ])
     
     def _define_tools(self) -> Dict[str, Dict[str, Any]]:
         """定义可用工具"""
@@ -1158,7 +1282,7 @@ class ReportAgent:
                 result = self.zep_tools.insight_forge(
                     graph_id=self.graph_id,
                     query=query,
-                    simulation_requirement=self.simulation_requirement,
+                    simulation_requirement=self.prediction_scenario,
                     report_context=ctx
                 )
                 return self._tool_result_to_text(result)
@@ -1200,7 +1324,7 @@ class ReportAgent:
                     graph_id=self.graph_id,
                     simulation_id=self.simulation_id,
                     interview_requirement=interview_topic,
-                    simulation_requirement=self.simulation_requirement,
+                    simulation_requirement=self.prediction_scenario,
                     max_agents=max_agents
                 )
                 return self._tool_result_to_text(result)
@@ -1227,7 +1351,7 @@ class ReportAgent:
             elif tool_name == "get_simulation_context":
                 # 重定向到 insight_forge，因为它更强大
                 logger.info(t('report.redirectToInsightForge'))
-                query = parameters.get("query", self.simulation_requirement)
+                query = parameters.get("query", self.prediction_scenario)
                 return self._execute_tool("insight_forge", {"query": query}, report_context)
             
             elif tool_name == "get_entities_by_type":
@@ -1338,11 +1462,24 @@ class ReportAgent:
         
         if progress_callback:
             progress_callback("planning", 0, t('progress.analyzingRequirements'))
+
+        # Football probability reports are deterministic once computed_prediction exists.
+        # Skip LLM outline planning so report-writing prompts cannot leak into sections.
+        if self.computed_prediction:
+            outline = self._ensure_prediction_outline(ReportOutline(
+                title="MiroFish足球博彩交易台概率报告",
+                summary="基于结构化足球概率模拟结果生成的博彩交易台报告。",
+                sections=[]
+            ))
+            if progress_callback:
+                progress_callback("planning", 100, t('progress.outlinePlanComplete'))
+            logger.info(t('report.outlinePlanDone', count=len(outline.sections)))
+            return outline
         
         # 首先获取模拟上下文
         context = self.zep_tools.get_simulation_context(
             graph_id=self.graph_id,
-            simulation_requirement=self.simulation_requirement
+            simulation_requirement=self.prediction_scenario
         )
         
         if progress_callback:
@@ -1350,7 +1487,7 @@ class ReportAgent:
         
         system_prompt = f"{PLAN_SYSTEM_PROMPT}\n\n{get_language_instruction()}"
         user_prompt = PLAN_USER_PROMPT_TEMPLATE.format(
-            simulation_requirement=self.simulation_requirement,
+            simulation_requirement=self.prediction_scenario,
             computed_prediction_context=self._get_computed_prediction_context(),
             total_nodes=context.get('graph_statistics', {}).get('total_nodes', 0),
             total_edges=context.get('graph_statistics', {}).get('total_edges', 0),
@@ -1479,7 +1616,7 @@ class ReportAgent:
         system_prompt = SECTION_SYSTEM_PROMPT_TEMPLATE.format(
             report_title=outline.title,
             report_summary=outline.summary,
-            simulation_requirement=self.simulation_requirement,
+            simulation_requirement=self.prediction_scenario,
             computed_prediction_context=self._get_computed_prediction_context(),
             section_title=section.title,
             tools_description=self._get_tools_description(),
@@ -1516,7 +1653,7 @@ class ReportAgent:
         all_tools = {"insight_forge", "panorama_search", "quick_search", "interview_agents"}
 
         # 报告上下文，用于InsightForge的子问题生成
-        report_context = f"章节标题: {section.title}\n模拟需求: {self.simulation_requirement}"
+        report_context = f"章节标题: {section.title}\n预测场景: {self.prediction_scenario}"
         
         for iteration in range(max_iterations):
             if progress_callback:
@@ -1877,9 +2014,9 @@ class ReportAgent:
                         t('progress.generatingSection', title=section.title, current=section_num, total=total_sections)
                     )
 
-                # 足球比分概率章节使用后端已计算结果，避免核心预测被LLM漏写。
-                if self._is_computed_prediction_section(section, section_num):
-                    section_content = football_prediction_to_markdown(self.computed_prediction)
+                # 足球概率报告使用后端已计算结果，避免LLM把用户提示词当作模拟事实分析。
+                if self.computed_prediction:
+                    section_content = self._generate_computed_prediction_section(section, section_num)
                     if self.report_logger:
                         self.report_logger.log_section_content(
                             section_title=section.title,
