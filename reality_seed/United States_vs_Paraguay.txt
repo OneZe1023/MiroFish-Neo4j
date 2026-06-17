@@ -1,0 +1,114 @@
+{
+  "simulation_meta": {
+    "simulation_id": "match_United States_Paraguay",
+    "created_at": "2026-06-12T06:54:29.396083Z",
+    "prediction_type": "football_match",
+    "simulation_runs": 100000,
+    "engine_version": "mirofish_v1",
+    "confidence_mode": "probabilistic"
+  },
+  "match": {
+    "competition": "FIFA World Cup",
+    "stage": "Group Stage",
+    "date": "2026-06-12",
+    "kickoff_time": "20:00",
+    "venue": "SoFi Stadium",
+    "city": "Inglewood",
+    "country": "California",
+    "attendance_expected": 66670.902,
+    "referee": {
+      "name": "Auto Generated",
+      "avg_yellow_cards": 3.46,
+      "avg_red_cards": 0.052,
+      "avg_penalties": 0.284
+    }
+  },
+  "teams": {
+    "home": {
+      "name": "United States",
+      "id": 771,
+      "elo_rating": 1700,
+      "attack_rating": 50.4,
+      "defense_rating": 54.6,
+      "xg_per_match": 1.2,
+      "xga_per_match": 1.2,
+      "overall_rating": 104.5,
+      "recent_form": [
+        1,
+        1,
+        1,
+        0,
+        1
+      ],
+      "win_rate": 0.5,
+      "volatility": 0.5
+    },
+    "away": {
+      "name": "Paraguay",
+      "id": 761,
+      "elo_rating": 1700,
+      "attack_rating": 50.4,
+      "defense_rating": 54.6,
+      "xg_per_match": 1.2,
+      "xga_per_match": 1.2,
+      "overall_rating": 104.5,
+      "recent_form": [
+        1,
+        1,
+        1,
+        0,
+        1
+      ],
+      "win_rate": 0.5,
+      "volatility": 0.5
+    }
+  },
+  "betting_market": {
+    "opening_odds": {
+      "home_win": 1.691,
+      "draw": 3.617,
+      "away_win": 5.369
+    },
+    "current_odds": {
+      "home_win": 1.501,
+      "draw": 4.453,
+      "away_win": 7.388
+    },
+    "asian_handicap": "-1.0",
+    "over_under": 2.5,
+    "market_confidence": 0.734,
+    "money_flow": {
+      "home": 70.57,
+      "draw": 21.382,
+      "away": 14.737
+    }
+  },
+  "environment": {
+    "weather": "Clear",
+    "temperature_celsius": 19.685,
+    "humidity": 56.449,
+    "wind_speed_kmh": 12.687,
+    "pitch_type": "Natural Grass",
+    "pitch_condition": "Excellent"
+  },
+  "simulation_rules": {
+    "include_red_cards": true,
+    "include_penalties": true,
+    "include_injuries": true,
+    "include_weather_effect": true,
+    "include_referee_bias": true,
+    "include_fatigue_effect": true,
+    "include_market_signal": true,
+    "include_morale_effect": true
+  },
+  "desired_output": {
+    "win_probability": true,
+    "draw_probability": true,
+    "loss_probability": true,
+    "expected_goals": true,
+    "most_likely_scores": true,
+    "top_factors": true,
+    "risk_analysis": true,
+    "value_bet_analysis": true
+  }
+}

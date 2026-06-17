@@ -1,0 +1,13 @@
+market,selection,line,odds,bookmaker
+1x2,home,,1.13,
+1x2,draw,,5.86,
+1x2,away,,13.5,
+over_under,over,2.5,1.95,
+over_under,under,2.5,1.88,
+btts,yes,,1.85,
+btts,no,,1.95,
+double_chance,home_or_draw,,1.25,
+double_chance,home_or_away,,1.30,
+double_chance,draw_or_away,,2.05,
+dnb,home,,1.40,
+dnb,away,,2.90,

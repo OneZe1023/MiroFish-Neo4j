@@ -6,8 +6,8 @@ through Flask's in-process test client, so it does not change or require the
 frontend/backend architecture.
 
 Default input files:
-  E:\\project\\world_cup\\reality_seed\\England vs. Croatia.txt
-  E:\\project\\world_cup\\reality_seed\\prompt_v2.txt
+  <project root>\\reality_seed\\Uzbekistan vs. Colombia.txt
+  <project root>\\reality_seed\\prompt_v2.txt
 
 Usage:
   uv run python scripts/run_from_files.py
@@ -40,8 +40,8 @@ PROJECT_ROOT = BACKEND_DIR.parent
 sys.path.insert(0, str(BACKEND_DIR))
 
 
-DEFAULT_SEED_PATH = r"E:\project\world_cup\reality_seed\Portugal vs. Congo DR.txt"
-DEFAULT_PROMPT_PATH = r"E:\project\world_cup\reality_seed\prompt_v2.txt"
+DEFAULT_SEED_PATH = PROJECT_ROOT / "reality_seed" / "Uzbekistan vs. Colombia.txt"
+DEFAULT_PROMPT_PATH = PROJECT_ROOT / "reality_seed" / "prompt_v2.txt"
 
 
 TERMINAL_TASK_STATUSES = {"completed", "failed"}

@@ -1,0 +1,120 @@
+{
+  "simulation_meta": {
+    "simulation_id": "match_Mexico_South Africa",
+    "created_at": "2026-06-10T08:05:41.580926Z",
+    "prediction_type": "football_match",
+    "simulation_runs": 100000,
+    "engine_version": "mirofish_v1",
+    "confidence_mode": "probabilistic"
+  },
+  "match": {
+    "competition": "FIFA World Cup",
+    "stage": "Group Stage",
+    "date": "2026-06-11",
+  "kickoff_time": {
+  "local_time": "13:00",
+  "timezone": "America/Mexico_City",
+  "utc_time": "2026-06-11T18:00:00-05:00",
+  "beijing_time": "2026-06-12T03:00:00+08:00",
+  "display_timezone": "CT (Central Time)"
+}
+  "venue": "Estadio Azteca",
+  "city": "Ciudad de México",
+  "country": "Mexico"
+    "attendance_expected": 56035.707,
+    "referee": {
+      "name": "Auto Generated",
+      "avg_yellow_cards": 4.272,
+      "avg_red_cards": 0.141,
+      "avg_penalties": 0.326
+    }
+  },
+  "teams": {
+    "home": {
+      "name": "Mexico",
+      "id": 769,
+      "elo_rating": 1750,
+      "attack_rating": 56.7,
+      "defense_rating": 58.8,
+      "xg_per_match": 1.35,
+      "xga_per_match": 1.1,
+      "overall_rating": 111.65,
+      "recent_form": [
+        1,
+        1,
+        1,
+        0,
+        1
+      ],
+      "win_rate": 0.5,
+      "volatility": 0.5
+    },
+    "away": {
+      "name": "South Africa",
+      "id": 774,
+      "elo_rating": 1550,
+      "attack_rating": 44.1,
+      "defense_rating": 48.3,
+      "xg_per_match": 1.05,
+      "xga_per_match": 1.35,
+      "overall_rating": 93.44,
+      "recent_form": [
+        1,
+        1,
+        1,
+        0,
+        1
+      ],
+      "win_rate": 0.5,
+      "volatility": 0.5
+    }
+  },
+  "betting_market": {
+    "opening_odds": {
+      "home_win": 1.742,
+      "draw": 3.487,
+      "away_win": 5.46
+    },
+    "current_odds": {
+      "home_win": 1.687,
+      "draw": 4.505,
+      "away_win": 5.538
+    },
+    "asian_handicap": "-1.0",
+    "over_under": 2.5,
+    "market_confidence": 0.769,
+    "money_flow": {
+      "home": 71.8,
+      "draw": 10.514,
+      "away": 13.895
+    }
+  },
+  "environment": {
+    "weather": "Clear",
+    "temperature_celsius": 25.688,
+    "humidity": 50.072,
+    "wind_speed_kmh": 14.871,
+    "pitch_type": "Natural Grass",
+    "pitch_condition": "Excellent"
+  },
+  "simulation_rules": {
+    "include_red_cards": true,
+    "include_penalties": true,
+    "include_injuries": true,
+    "include_weather_effect": true,
+    "include_referee_bias": true,
+    "include_fatigue_effect": true,
+    "include_market_signal": true,
+    "include_morale_effect": true
+  },
+  "desired_output": {
+    "win_probability": true,
+    "draw_probability": true,
+    "loss_probability": true,
+    "expected_goals": true,
+    "most_likely_scores": true,
+    "top_factors": true,
+    "risk_analysis": true,
+    "value_bet_analysis": true
+  }
+}

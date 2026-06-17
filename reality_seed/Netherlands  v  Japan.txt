@@ -1,0 +1,120 @@
+{
+  "simulation_meta": {
+    "simulation_id": "match_Netherlands_Japan",
+    "created_at": "2026-06-13T05:25:44.113214Z",
+    "prediction_type": "football_match",
+    "simulation_runs": 100000,
+    "engine_version": "mirofish_v1",
+    "confidence_mode": "probabilistic"
+  },
+  "match": {
+    "competition": "FIFA World Cup",
+    "stage": "Group Stage",
+    "date": "2026-06-15",
+    "kickoff_time": {
+      "local_time": "04:00",
+      "timezone": "America/Chicago",
+      "utc_time": "2026-06-15T09:00:00-05:00",
+      "beijing_time": "2026-06-15T17:00:00+08:00",
+      "display_timezone": "CDT (Central Daylight Time)"
+    },
+    "venue": "AT&T Stadium",
+    "city": "Arlington",
+    "country": "United States",
+    "attendance_expected": 80000.0,
+    "referee": {
+      "name": "Auto Generated",
+      "avg_yellow_cards": 3.48,
+      "avg_red_cards": 0.16,
+      "avg_penalties": 0.22
+    }
+  },
+  "teams": {
+    "home": {
+      "name": "Netherlands",
+      "id": 801,
+      "elo_rating": 1915,
+      "attack_rating": 92.5,
+      "defense_rating": 88.1,
+      "xg_per_match": 1.88,
+      "xga_per_match": 1.12,
+      "overall_rating": 90.3,
+      "recent_form": [
+        3,
+        1,
+        3,
+        0,
+        3
+      ],
+      "win_rate": 0.58,
+      "volatility": 0.28
+    },
+    "away": {
+      "name": "Japan",
+      "id": 804,
+      "elo_rating": 1820,
+      "attack_rating": 87.9,
+      "defense_rating": 85.3,
+      "xg_per_match": 1.42,
+      "xga_per_match": 1.18,
+      "overall_rating": 86.6,
+      "recent_form": [
+        3,
+        3,
+        1,
+        0,
+        3
+      ],
+      "win_rate": 0.44,
+      "volatility": 0.32
+    }
+  },
+  "betting_market": {
+    "opening_odds": {
+      "home_win": 1.82,
+      "draw": 3.6,
+      "away_win": 4.10
+    },
+    "current_odds": {
+      "home_win": 1.78,
+      "draw": 3.65,
+      "away_win": 4.35
+    },
+    "asian_handicap": "-0.5",
+    "over_under": 2.5,
+    "market_confidence": 0.812,
+    "money_flow": {
+      "home": 58.4,
+      "draw": 23.2,
+      "away": 18.4
+    }
+  },
+  "environment": {
+    "weather": "Indoors (Roof Closed)",
+    "temperature_celsius": 21.5,
+    "humidity": 48.0,
+    "wind_speed_kmh": 0.0,
+    "pitch_type": "Natural Grass",
+    "pitch_condition": "Excellent"
+  },
+  "simulation_rules": {
+    "include_red_cards": true,
+    "include_penalties": true,
+    "include_injuries": true,
+    "include_weather_effect": true,
+    "include_referee_bias": true,
+    "include_fatigue_effect": true,
+    "include_market_signal": true,
+    "include_morale_effect": true
+  },
+  "desired_output": {
+    "win_probability": true,
+    "draw_probability": true,
+    "loss_probability": true,
+    "expected_goals": true,
+    "most_likely_scores": true,
+    "top_factors": true,
+    "risk_analysis": true,
+    "value_bet_analysis": true
+  }
+}

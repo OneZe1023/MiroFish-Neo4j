@@ -1,0 +1,120 @@
+{
+  "simulation_meta": {
+    "simulation_id": "match_Iran_New_Zealand",
+    "created_at": "2026-06-15T00:52:14.105470Z",
+    "prediction_type": "football_match",
+    "simulation_runs": 100000,
+    "engine_version": "mirofish_v1",
+    "confidence_mode": "probabilistic"
+  },
+  "match": {
+    "competition": "FIFA World Cup",
+    "stage": "Group Stage",
+    "date": "2026-06-16",
+    "kickoff_time": {
+      "local_time": "09:00",
+      "timezone": "America/Los_Angeles",
+      "utc_time": "2026-06-16T16:00:00-07:00",
+      "beijing_time": "2026-06-17T00:00:00+08:00",
+      "display_timezone": "PDT (Pacific Daylight Time)"
+    },
+    "venue": "SoFi Stadium",
+    "city": "Inglewood",
+    "country": "United States",
+    "attendance_expected": 70200.0,
+    "referee": {
+      "name": "Auto Generated",
+      "avg_yellow_cards": 3.78,
+      "avg_red_cards": 0.20,
+      "avg_penalties": 0.25
+    }
+  },
+  "teams": {
+    "home": {
+      "name": "Iran",
+      "id": 816,
+      "elo_rating": 1815,
+      "attack_rating": 85.2,
+      "defense_rating": 84.9,
+      "xg_per_match": 1.45,
+      "xga_per_match": 1.12,
+      "overall_rating": 85.05,
+      "recent_form": [
+        3,
+        3,
+        1,
+        0,
+        3
+      ],
+      "win_rate": 0.52,
+      "volatility": 0.28
+    },
+    "away": {
+      "name": "New Zealand",
+      "id": 868,
+      "elo_rating": 1645,
+      "attack_rating": 75.8,
+      "defense_rating": 77.1,
+      "xg_per_match": 1.05,
+      "xga_per_match": 1.48,
+      "overall_rating": 76.45,
+      "recent_form": [
+        1,
+        0,
+        3,
+        1,
+        1
+      ],
+      "win_rate": 0.24,
+      "volatility": 0.33
+    }
+  },
+  "betting_market": {
+    "opening_odds": {
+      "home_win": 1.80,
+      "draw": 3.50,
+      "away_win": 4.40
+    },
+    "current_odds": {
+      "home_win": 1.74,
+      "draw": 3.55,
+      "away_win": 4.75
+    },
+    "asian_handicap": "-0.5",
+    "over_under": 2.25,
+    "market_confidence": 0.802,
+    "money_flow": {
+      "home": 58.2,
+      "draw": 24.5,
+      "away": 17.3
+    }
+  },
+  "environment": {
+    "weather": "Indoors (Roof Closed)",
+    "temperature_celsius": 21.0,
+    "humidity": 52.0,
+    "wind_speed_kmh": 0.0,
+    "pitch_type": "Artificial Turf",
+    "pitch_condition": "Excellent"
+  },
+  "simulation_rules": {
+    "include_red_cards": true,
+    "include_penalties": true,
+    "include_injuries": true,
+    "include_weather_effect": true,
+    "include_referee_bias": true,
+    "include_fatigue_effect": true,
+    "include_market_signal": true,
+    "include_morale_effect": true
+  },
+  "desired_output": {
+    "win_probability": true,
+    "draw_probability": true,
+    "loss_probability": true,
+    "expected_goals": true,
+    "most_likely_scores": true,
+    "top_factors": true,
+    "risk_analysis": true,
+    "value_bet_analysis": true
+  }
+}

@@ -1,0 +1,120 @@
+{
+  "simulation_meta": {
+    "simulation_id": "match_Korea Republic_Czechia",
+    "created_at": "2026-06-10T08:29:04.058952Z",
+    "prediction_type": "football_match",
+    "simulation_runs": 100000,
+    "engine_version": "mirofish_v1",
+    "confidence_mode": "probabilistic"
+  },
+  "match": {
+    "competition": "FIFA World Cup",
+    "stage": "Group Stage",
+    "date": "2026-06-11",
+  "kickoff_time": {
+  "local_time": "20:00",
+  "timezone": "America/Mexico_City",
+  "utc_time": "2026-06-12T2:00:00-05:00",
+  "beijing_time": "2026-06-12T10:00:00+08:00",
+  "display_timezone": "CT (Central Time)"
+}
+  "venue": "Guadalajara Stadium",
+  "city": "Zapopan",
+  "country": "Mexico"
+    "attendance_expected": 59772.061,
+    "referee": {
+      "name": "Auto Generated",
+      "avg_yellow_cards": 3.492,
+      "avg_red_cards": 0.264,
+      "avg_penalties": 0.261
+    }
+  },
+  "teams": {
+    "home": {
+      "name": "Korea Republic",
+      "id": -1,
+      "elo_rating": 1700,
+      "attack_rating": 75,
+      "defense_rating": 75,
+      "xg_per_match": 1.2,
+      "xga_per_match": 1.2,
+      "overall_rating": 75,
+      "recent_form": [
+        1,
+        1,
+        1,
+        0,
+        1
+      ],
+      "win_rate": 0.5,
+      "volatility": 0.5
+    },
+    "away": {
+      "name": "Czechia",
+      "id": 798,
+      "elo_rating": 1700,
+      "attack_rating": 50.4,
+      "defense_rating": 54.6,
+      "xg_per_match": 1.2,
+      "xga_per_match": 1.2,
+      "overall_rating": 104.5,
+      "recent_form": [
+        1,
+        1,
+        1,
+        0,
+        1
+      ],
+      "win_rate": 0.5,
+      "volatility": 0.5
+    }
+  },
+  "betting_market": {
+    "opening_odds": {
+      "home_win": 1.815,
+      "draw": 4.309,
+      "away_win": 4.61
+    },
+    "current_odds": {
+      "home_win": 1.226,
+      "draw": 4.715,
+      "away_win": 7.59
+    },
+    "asian_handicap": "-1.0",
+    "over_under": 2.5,
+    "market_confidence": 0.824,
+    "money_flow": {
+      "home": 58.088,
+      "draw": 19.996,
+      "away": 19.168
+    }
+  },
+  "environment": {
+    "weather": "Clear",
+    "temperature_celsius": 20.317,
+    "humidity": 51.991,
+    "wind_speed_kmh": 11.037,
+    "pitch_type": "Natural Grass",
+    "pitch_condition": "Excellent"
+  },
+  "simulation_rules": {
+    "include_red_cards": true,
+    "include_penalties": true,
+    "include_injuries": true,
+    "include_weather_effect": true,
+    "include_referee_bias": true,
+    "include_fatigue_effect": true,
+    "include_market_signal": true,
+    "include_morale_effect": true
+  },
+  "desired_output": {
+    "win_probability": true,
+    "draw_probability": true,
+    "loss_probability": true,
+    "expected_goals": true,
+    "most_likely_scores": true,
+    "top_factors": true,
+    "risk_analysis": true,
+    "value_bet_analysis": true
+  }
+}

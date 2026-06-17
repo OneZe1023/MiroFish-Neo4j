@@ -1,0 +1,291 @@
+{
+  "simulation_meta": {
+    "simulation_id": "fifa_world_cup_2026_champion_simulation",
+    "prediction_type": "tournament_simulation",
+    "competition": "FIFA World Cup 2026",
+    "simulation_runs": 100000,
+    "engine": "mirofish_wc_champion_v1",
+    "confidence_mode": "probabilistic"
+  },
+
+  "tournament": {
+    "host_countries": [
+      "United States",
+      "Canada",
+      "Mexico"
+    ],
+    "teams_count": 48,
+    "format": {
+      "group_stage": true,
+      "round_of_32": true,
+      "round_of_16": true,
+      "quarter_final": true,
+      "semi_final": true,
+      "final": true
+    },
+    "champion_required": true,
+    "runner_up_required": true
+  },
+
+
+  "global_factors": {
+
+    "home_advantage": {
+      "enabled": true,
+      "usa_canada_mexico_bonus": 0.08
+    },
+
+    "travel_effect": {
+      "enabled": true,
+      "long_distance_penalty": 0.05
+    },
+
+    "fatigue_model": {
+      "enabled": true,
+      "knockout_multiplier": 1.25
+    },
+
+    "penalty_shootout": {
+      "enabled": true,
+      "knockout_probability": 0.12
+    }
+  },
+
+
+  "teams": [
+
+    {
+      "name": "France",
+      "region": "Europe",
+
+      "strength": {
+        "fifa_rank": 3,
+        "elo": 2050,
+        "overall": 92,
+        "attack": 94,
+        "midfield": 90,
+        "defense": 91,
+        "goalkeeper": 88
+      },
+
+      "attack_model": {
+        "xg": 2.15,
+        "shots": 16.8,
+        "conversion": 0.15
+      },
+
+      "defense_model": {
+        "xga": 0.85,
+        "clean_sheet_rate": 0.45
+      },
+
+
+      "squad": {
+        "depth": 95,
+        "average_age": 27.2,
+        "experience": 92
+      },
+
+
+      "coach_factor": {
+        "quality": 90,
+        "tactical_adaptation": 93
+      },
+
+
+      "championship_probability_prior": 0.15,
+
+      "volatility": 0.18
+    },
+
+
+    {
+      "name": "Argentina",
+
+      "strength": {
+        "fifa_rank": 1,
+        "elo": 2025,
+        "overall": 91,
+        "attack": 90,
+        "midfield": 92,
+        "defense": 88,
+        "goalkeeper": 91
+      },
+
+      "attack_model": {
+        "xg": 1.95,
+        "shots": 14.5,
+        "conversion": 0.14
+      },
+
+      "defense_model": {
+        "xga": 0.88,
+        "clean_sheet_rate": 0.42
+      },
+
+
+      "squad": {
+        "depth": 88,
+        "average_age": 28,
+        "experience": 95
+      },
+
+
+      "coach_factor": {
+        "quality": 94,
+        "tactical_adaptation": 92
+      },
+
+      "championship_probability_prior": 0.14,
+
+      "volatility": 0.15
+    },
+
+
+    {
+      "name": "Brazil",
+
+      "strength": {
+        "fifa_rank": 5,
+        "elo": 2000,
+        "overall": 90,
+        "attack": 93,
+        "midfield": 88,
+        "defense": 89,
+        "goalkeeper": 88
+      },
+
+      "attack_model": {
+        "xg": 2.05,
+        "shots": 17,
+        "conversion": 0.13
+      },
+
+
+      "defense_model": {
+        "xga": 0.95
+      },
+
+
+      "squad": {
+        "depth": 94,
+        "experience": 86
+      },
+
+
+      "coach_factor": {
+        "quality": 88,
+        "adaptation": 89
+      },
+
+
+      "championship_probability_prior": 0.13,
+
+      "volatility": 0.22
+    },
+
+
+    {
+      "name": "England",
+
+      "strength": {
+        "fifa_rank": 4,
+        "elo": 1995,
+        "overall": 91,
+        "attack": 92,
+        "midfield": 91,
+        "defense": 87,
+        "goalkeeper": 86
+      },
+
+
+      "attack_model": {
+        "xg": 2.10
+      },
+
+      "defense_model": {
+        "xga": 1.0
+      },
+
+
+      "squad": {
+        "depth": 93,
+        "experience": 85
+      },
+
+
+      "coach_factor": {
+        "quality": 86
+      },
+
+      "championship_probability_prior": 0.12,
+
+      "volatility": 0.20
+    }
+
+  ],
+
+
+  "simulation_rules": {
+
+
+    "champion_selection": {
+
+      "method": "monte_carlo",
+
+      "iterations": 100000,
+
+
+      "factors": {
+
+        "team_strength": 0.35,
+
+        "xg_performance": 0.20,
+
+        "squad_depth": 0.15,
+
+        "coach": 0.10,
+
+        "fatigue": 0.10,
+
+        "luck": 0.10
+      }
+    },
+
+
+    "match_engine": {
+
+      "goal_model": "poisson",
+
+      "lambda_adjustment": true,
+
+      "red_cards": true,
+
+      "injuries": true,
+
+      "penalty": true,
+
+      "weather": true
+    }
+
+  },
+
+
+  "output": {
+
+    "champion_probability": true,
+
+    "runner_up_probability": true,
+
+    "semi_final_probability": true,
+
+    "top8_probability": true,
+
+    "dark_horse_detection": true,
+
+    "champion_path": true,
+
+    "reasoning": true
+  }
+
+}

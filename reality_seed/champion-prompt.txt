@@ -1,0 +1,107 @@
+你是 MiroFish 世界杯冠军随机模拟引擎。
+
+你收到一个 FIFA World Cup Reality Seed。
+
+你的任务不是预测单场比赛，而是模拟整个世界杯生命周期。
+
+请执行：
+
+1. 创建100000个世界杯随机世界。
+
+每个世界包括：
+
+- 小组赛
+- 32强
+- 16强
+- 四分之一决赛
+- 半决赛
+- 决赛
+
+
+2. 每场比赛使用：
+
+Poisson进球模型
+
+基础参数：
+
+lambda_home
+lambda_away
+
+由：
+
+- xG
+- attack
+- defense
+- goalkeeper
+- fatigue
+
+动态调整。
+
+
+3. 淘汰赛阶段加入：
+
+- 红牌概率
+- 点球概率
+- 伤病影响
+- 心理压力
+- 主场因素
+- 旅行疲劳
+
+
+4. 不允许修改Reality Seed中的球队实力。
+
+只能在随机事件中产生波动。
+
+
+5. 输出：
+
+
+{
+ "champion": {
+   "team":"",
+   "probability":0
+ },
+
+ "runner_up": {
+   "team":"",
+   "probability":0
+ },
+
+
+ "top_candidates":[
+   {
+    "team":"",
+    "title_probability":0,
+    "final_probability":0,
+    "semi_probability":0
+   }
+ ],
+
+
+ "simulation_summary":{
+
+ "iterations":100000,
+
+ "most_common_final":
+ "",
+
+ "average_final_score":
+ {
+ "home":0,
+ "away":0
+ }
+
+ },
+
+
+ "analysis":{
+
+ "key_factors":[],
+
+ "upsets":[],
+
+ "dark_horses":[]
+
+ }
+
+}

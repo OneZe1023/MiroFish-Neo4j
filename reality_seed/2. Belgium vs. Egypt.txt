@@ -1,0 +1,120 @@
+{
+  "simulation_meta": {
+    "simulation_id": "match_Belgium_Egypt",
+    "created_at": "2026-06-15T00:52:14.105122Z",
+    "prediction_type": "football_match",
+    "simulation_runs": 100000,
+    "engine_version": "mirofish_v1",
+    "confidence_mode": "probabilistic"
+  },
+  "match": {
+    "competition": "FIFA World Cup",
+    "stage": "Group Stage",
+    "date": "2026-06-16",
+    "kickoff_time": {
+      "local_time": "03:00",
+      "timezone": "America/Los_Angeles",
+      "utc_time": "2026-06-16T10:00:00-07:00",
+      "beijing_time": "2026-06-16T18:00:00+08:00",
+      "display_timezone": "PDT (Pacific Daylight Time)"
+    },
+    "venue": "Lumen Field",
+    "city": "Seattle",
+    "country": "United States",
+    "attendance_expected": 68500.0,
+    "referee": {
+      "name": "Auto Generated",
+      "avg_yellow_cards": 3.95,
+      "avg_red_cards": 0.22,
+      "avg_penalties": 0.26
+    }
+  },
+  "teams": {
+    "home": {
+      "name": "Belgium",
+      "id": 807,
+      "elo_rating": 1942,
+      "attack_rating": 91.8,
+      "defense_rating": 86.5,
+      "xg_per_match": 1.95,
+      "xga_per_match": 1.18,
+      "overall_rating": 89.15,
+      "recent_form": [
+        3,
+        1,
+        3,
+        0,
+        3
+      ],
+      "win_rate": 0.58,
+      "volatility": 0.26
+    },
+    "away": {
+      "name": "Egypt",
+      "id": 825,
+      "elo_rating": 1795,
+      "attack_rating": 84.6,
+      "defense_rating": 85.2,
+      "xg_per_match": 1.32,
+      "xga_per_match": 1.22,
+      "overall_rating": 84.90,
+      "recent_form": [
+        3,
+        1,
+        1,
+        3,
+        0
+      ],
+      "win_rate": 0.36,
+      "volatility": 0.31
+    }
+  },
+  "betting_market": {
+    "opening_odds": {
+      "home_win": 1.68,
+      "draw": 3.85,
+      "away_win": 4.80
+    },
+    "current_odds": {
+      "home_win": 1.62,
+      "draw": 3.90,
+      "away_win": 5.10
+    },
+    "asian_handicap": "-0.75",
+    "over_under": 2.5,
+    "market_confidence": 0.824,
+    "money_flow": {
+      "home": 62.8,
+      "draw": 21.4,
+      "away": 15.8
+    }
+  },
+  "environment": {
+    "weather": "Cloudy",
+    "temperature_celsius": 16.5,
+    "humidity": 72.0,
+    "wind_speed_kmh": 13.4,
+    "pitch_type": "Artificial Turf",
+    "pitch_condition": "Excellent"
+  },
+  "simulation_rules": {
+    "include_red_cards": true,
+    "include_penalties": true,
+    "include_injuries": true,
+    "include_weather_effect": true,
+    "include_referee_bias": true,
+    "include_fatigue_effect": true,
+    "include_market_signal": true,
+    "include_morale_effect": true
+  },
+  "desired_output": {
+    "win_probability": true,
+    "draw_probability": true,
+    "loss_probability": true,
+    "expected_goals": true,
+    "most_likely_scores": true,
+    "top_factors": true,
+    "risk_analysis": true,
+    "value_bet_analysis": true
+  }
+}

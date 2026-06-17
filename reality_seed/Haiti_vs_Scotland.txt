@@ -1,0 +1,120 @@
+{
+  "simulation_meta": {
+    "simulation_id": "match_Haiti_Scotland",
+    "created_at": "2026-06-13T05:31:12.842580Z",
+    "prediction_type": "football_match",
+    "simulation_runs": 100000,
+    "engine_version": "mirofish_v1",
+    "confidence_mode": "probabilistic"
+  },
+  "match": {
+    "competition": "FIFA World Cup",
+    "stage": "Group Stage",
+    "date": "2026-06-14",
+    "kickoff_time": {
+      "local_time": "09:00",
+      "timezone": "America/New_York",
+      "utc_time": "2026-06-14T13:00:00-04:00",
+      "beijing_time": "2026-06-15T01:00:00+08:00",
+      "display_timezone": "EDT (Eastern Daylight Time)"
+    },
+    "venue": "Gillette Stadium",
+    "city": "Foxborough",
+    "country": "United States",
+    "attendance_expected": 61200.0,
+    "referee": {
+      "name": "Auto Generated",
+      "avg_yellow_cards": 3.88,
+      "avg_red_cards": 0.20,
+      "avg_penalties": 0.27
+    }
+  },
+  "teams": {
+    "home": {
+      "name": "Haiti",
+      "id": 892,
+      "elo_rating": 1545,
+      "attack_rating": 71.4,
+      "defense_rating": 73.6,
+      "xg_per_match": 0.95,
+      "xga_per_match": 1.82,
+      "overall_rating": 72.50,
+      "recent_form": [
+        1,
+        0,
+        3,
+        0,
+        0
+      ],
+      "win_rate": 0.18,
+      "volatility": 0.41
+    },
+    "away": {
+      "name": "Scotland",
+      "id": 819,
+      "elo_rating": 1760,
+      "attack_rating": 83.9,
+      "defense_rating": 85.1,
+      "xg_per_match": 1.40,
+      "xga_per_match": 1.22,
+      "overall_rating": 84.50,
+      "recent_form": [
+        3,
+        1,
+        0,
+        3,
+        1
+      ],
+      "win_rate": 0.48,
+      "volatility": 0.31
+    }
+  },
+  "betting_market": {
+    "opening_odds": {
+      "home_win": 5.25,
+      "draw": 3.80,
+      "away_win": 1.62
+    },
+    "current_odds": {
+      "home_win": 5.60,
+      "draw": 3.90,
+      "away_win": 1.57
+    },
+    "asian_handicap": "+1.0",
+    "over_under": 2.5,
+    "market_confidence": 0.831,
+    "money_flow": {
+      "home": 12.4,
+      "draw": 21.6,
+      "away": 66.0
+    }
+  },
+  "environment": {
+    "weather": "Light Rain",
+    "temperature_celsius": 17.8,
+    "humidity": 82.0,
+    "wind_speed_kmh": 14.8,
+    "pitch_type": "Natural Grass",
+    "pitch_condition": "Good"
+  },
+  "simulation_rules": {
+    "include_red_cards": true,
+    "include_penalties": true,
+    "include_injuries": true,
+    "include_weather_effect": true,
+    "include_referee_bias": true,
+    "include_fatigue_effect": true,
+    "include_market_signal": true,
+    "include_morale_effect": true
+  },
+  "desired_output": {
+    "win_probability": true,
+    "draw_probability": true,
+    "loss_probability": true,
+    "expected_goals": true,
+    "most_likely_scores": true,
+    "top_factors": true,
+    "risk_analysis": true,
+    "value_bet_analysis": true
+  }
+}

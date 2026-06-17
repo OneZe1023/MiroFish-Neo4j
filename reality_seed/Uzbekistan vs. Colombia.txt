@@ -1,0 +1,108 @@
+{
+  "simulation_meta": {
+    "simulation_id": "match_Uzbekistan_Colombia_2026",
+    "created_at": "2026-06-17T00:58:22.115Z",
+    "prediction_type": "football_match",
+    "simulation_runs": 100000,
+    "engine_version": "mirofish_v1",
+    "confidence_mode": "probabilistic"
+  },
+  "match": {
+    "competition": "FIFA World Cup",
+    "stage": "Group Stage (Group E)",
+    "date": "2026-06-18",
+    "kickoff_time": {
+      "local_time": "10:00",
+      "timezone": "America/Mexico_City",
+      "utc_time": "2026-06-18T10:00:00-06:00",
+      "beijing_time": "2026-06-19T00:00:00+08:00",
+      "display_timezone": "CST (Central Standard Time)"
+    },
+    "venue": "Estadio Banorte",
+    "city": "Mexico City",
+    "country": "Mexico",
+    "attendance_expected": 76000.0,
+    "referee": {
+      "name": "Auto Generated",
+      "avg_yellow_cards": 3.95,
+      "avg_red_cards": 0.30,
+      "avg_penalties": 0.26
+    }
+  },
+  "teams": {
+    "home": {
+      "name": "Uzbekistan",
+      "id": 380,
+      "elo_rating": 1565,
+      "attack_rating": 74.2,
+      "defense_rating": 72.5,
+      "xg_per_match": 1.02,
+      "xga_per_match": 1.48,
+      "overall_rating": 73.35,
+      "recent_form": [1, 3, 1, 0, 3],
+      "win_rate": 0.35,
+      "volatility": 0.36
+    },
+    "away": {
+      "name": "Colombia",
+      "id": 440,
+      "elo_rating": 1845,
+      "attack_rating": 84.0,
+      "defense_rating": 81.8,
+      "xg_per_match": 1.74,
+      "xga_per_match": 1.05,
+      "overall_rating": 82.9,
+      "recent_form": [3, 3, 1, 3, 1],
+      "win_rate": 0.60,
+      "volatility": 0.28
+    }
+  },
+  "betting_market": {
+    "opening_odds": {
+      "home_win": 4.50,
+      "draw": 3.50,
+      "away_win": 1.83
+    },
+    "current_odds": {
+      "home_win": 4.75,
+      "draw": 3.60,
+      "away_win": 1.75
+    },
+    "asian_handicap": "+0.75",
+    "over_under": 2.5,
+    "market_confidence": 0.81,
+    "money_flow": {
+      "home": 15.8,
+      "draw": 28.7,
+      "away": 55.5
+    }
+  },
+  "environment": {
+    "weather": "Partly Cloudy",
+    "temperature_celsius": 20.0,
+    "humidity": 45.0,
+    "wind_speed_kmh": 8.0,
+    "pitch_type": "Natural Grass",
+    "pitch_condition": "Good"
+  },
+  "simulation_rules": {
+    "include_red_cards": true,
+    "include_penalties": true,
+    "include_injuries": true,
+    "include_weather_effect": true,
+    "include_referee_bias": true,
+    "include_fatigue_effect": true,
+    "include_market_signal": true,
+    "include_morale_effect": true
+  },
+  "desired_output": {
+    "win_probability": true,
+    "draw_probability": true,
+    "loss_probability": true,
+    "expected_goals": true,
+    "most_likely_scores": true,
+    "top_factors": true,
+    "risk_analysis": true,
+    "value_bet_analysis": true
+  }
+}

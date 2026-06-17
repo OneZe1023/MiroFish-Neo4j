@@ -1,0 +1,75 @@
+{
+  "meta": {
+    "seed_file": "reality_seed\\United States_vs_Paraguay.txt",
+    "match": "United States vs Paraguay",
+    "home_team": "United States",
+    "away_team": "Paraguay",
+    "iterations": 100000,
+    "simulated_at": "2026-06-12T06:54:29.927477Z",
+    "engine": "MiroFish Football v1.0"
+  },
+  "result": {
+    "win_prob": {
+      "home": 0.3945,
+      "draw": 0.2717,
+      "away": 0.3338
+    },
+    "expected_goals": {
+      "home": 1.27,
+      "away": 1.14
+    },
+    "top_scores": [
+      {
+        "score": "1-1",
+        "count": 12739,
+        "prob": 0.127
+      },
+      {
+        "score": "1-0",
+        "count": 11365,
+        "prob": 0.114
+      },
+      {
+        "score": "0-1",
+        "count": 10303,
+        "prob": 0.103
+      },
+      {
+        "score": "0-0",
+        "count": 9110,
+        "prob": 0.091
+      },
+      {
+        "score": "2-1",
+        "count": 8096,
+        "prob": 0.081
+      },
+      {
+        "score": "2-0",
+        "count": 7314,
+        "prob": 0.073
+      },
+      {
+        "score": "1-2",
+        "count": 7245,
+        "prob": 0.072
+      },
+      {
+        "score": "0-2",
+        "count": 6081,
+        "prob": 0.061
+      },
+      {
+        "score": "2-2",
+        "count": 4536,
+        "prob": 0.045
+      },
+      {
+        "score": "3-1",
+        "count": 3432,
+        "prob": 0.034
+      }
+    ],
+    "avg_confidence": 0.789
+  }
+}
