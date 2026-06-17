@@ -12,6 +12,7 @@
 
 import json
 import math
+import re
 from typing import Dict, Any, List, Optional, Callable
 from dataclasses import dataclass, field, asdict
 from datetime import datetime
@@ -781,9 +782,13 @@ class SimulationConfigGenerator:
             # 1. 直接匹配
             if poster_type in agents_by_type:
                 agents = agents_by_type[poster_type]
-                idx = used_indices.get(poster_type, 0) % len(agents)
-                matched_agent_id = agents[idx].agent_id
-                used_indices[poster_type] = idx + 1
+                matched_agent = self._match_agent_by_content(content, agents)
+                if matched_agent is not None:
+                    matched_agent_id = matched_agent.agent_id
+                else:
+                    idx = used_indices.get(poster_type, 0) % len(agents)
+                    matched_agent_id = agents[idx].agent_id
+                    used_indices[poster_type] = idx + 1
             else:
                 # 2. 使用别名匹配
                 for alias_key, aliases in type_aliases.items():
@@ -791,9 +796,13 @@ class SimulationConfigGenerator:
                         for alias in aliases:
                             if alias in agents_by_type:
                                 agents = agents_by_type[alias]
-                                idx = used_indices.get(alias, 0) % len(agents)
-                                matched_agent_id = agents[idx].agent_id
-                                used_indices[alias] = idx + 1
+                                matched_agent = self._match_agent_by_content(content, agents)
+                                if matched_agent is not None:
+                                    matched_agent_id = matched_agent.agent_id
+                                else:
+                                    idx = used_indices.get(alias, 0) % len(agents)
+                                    matched_agent_id = agents[idx].agent_id
+                                    used_indices[alias] = idx + 1
                                 break
                     if matched_agent_id is not None:
                         break
@@ -818,6 +827,34 @@ class SimulationConfigGenerator:
         
         event_config.initial_posts = updated_posts
         return event_config
+
+    @staticmethod
+    def _match_agent_by_content(
+        content: str,
+        agents: List[AgentActivityConfig],
+    ) -> Optional[AgentActivityConfig]:
+        """Prefer an agent whose entity name appears in the post content."""
+        normalized_content = (content or "").lower()
+        if not normalized_content:
+            return None
+
+        exact_matches = [
+            agent for agent in agents
+            if agent.entity_name and agent.entity_name.lower() in normalized_content
+        ]
+        if exact_matches:
+            return max(exact_matches, key=lambda a: len(a.entity_name or ""))
+
+        token_matches = []
+        for agent in agents:
+            name = (agent.entity_name or "").lower()
+            tokens = [token for token in re.split(r"[^a-z0-9]+", name) if len(token) >= 3]
+            if tokens and all(token in normalized_content for token in tokens):
+                token_matches.append(agent)
+        if token_matches:
+            return max(token_matches, key=lambda a: len(a.entity_name or ""))
+
+        return None
     
     def _generate_agent_configs_batch(
         self,

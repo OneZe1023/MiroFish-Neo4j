@@ -193,6 +193,7 @@ class Neo4jEntityReader:
                 RETURN n.uuid AS uuid, n.name AS name, labels(n) AS labels,
                        n.summary AS summary, n.entity_type AS entity_type,
                        n.created_at AS created_at, properties(n) AS attributes
+                ORDER BY coalesce(n.created_at, ""), coalesce(n.name, ""), n.uuid
                 """
                 result = session.run(cypher, graph_id=graph_id)
                 for record in result:

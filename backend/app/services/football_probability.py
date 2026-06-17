@@ -7,6 +7,7 @@ runs a reproducible bivariate-Poisson Monte Carlo simulation.
 
 import hashlib
 import json
+import logging
 import math
 import os
 import random
@@ -16,6 +17,8 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
 
 from ..config import Config
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -55,7 +58,7 @@ class FootballProbabilitySimulator:
     ) -> Optional[Dict[str, Any]]:
         config = cls._load_simulation_config(simulation_id)
         texts = cls._collect_texts(simulation_id, config, simulation_requirement)
-        inputs = cls._extract_inputs(config, texts, samples=samples)
+        inputs = cls._extract_inputs(config, texts, samples=samples, simulation_id=simulation_id)
         if not inputs:
             return None
 
@@ -93,6 +96,10 @@ class FootballProbabilitySimulator:
         if simulation_requirement:
             texts.append(simulation_requirement)
 
+        project_seed = cls._load_project_seed_text(config)
+        if project_seed:
+            texts.insert(0, project_seed)
+
         sim_dir = os.path.join(Config.OASIS_SIMULATION_DATA_DIR, simulation_id)
         for platform in ("twitter", "reddit"):
             actions_path = os.path.join(sim_dir, platform, "actions.jsonl")
@@ -114,6 +121,10 @@ class FootballProbabilitySimulator:
             except OSError:
                 continue
 
+        logger.debug(
+            f"[FootballProbability] Collected {len(texts)} text sources for simulation {simulation_id}, "
+            f"total chars={sum(len(t) for t in texts)}"
+        )
         return texts
 
     @classmethod
@@ -122,9 +133,15 @@ class FootballProbabilitySimulator:
         config: Dict[str, Any],
         texts: List[str],
         samples: int,
+        simulation_id: str = "",
     ) -> Optional[FootballPredictionInputs]:
         warnings: List[str] = []
         joined = "\n".join(texts)
+
+        seed_data = cls._extract_seed_json(joined)
+        seed_inputs = cls._extract_seed_inputs(seed_data, samples=samples) if seed_data else None
+        if seed_inputs:
+            return seed_inputs
 
         home_team, away_team = cls._extract_teams(config, joined)
         lambda_home, lambda_away, source, lambda_warnings = cls._extract_lambdas(joined, home_team, away_team)
@@ -132,6 +149,12 @@ class FootballProbabilitySimulator:
 
         if lambda_home is None or lambda_away is None:
             warnings.append("未找到明确的 lambda_home/lambda_away 数值，无法生成比分概率分布。")
+            logger.warning(
+                f"[FootballProbability] lambda extraction failed for simulation {simulation_id}. "
+                f"home_team={home_team}, away_team={away_team}. "
+                f"Extracted values: home={lambda_home}, away={lambda_away}. "
+                f"Full text sample (first 500 chars): {joined[:500]!r}"
+            )
             return None
 
         correlation = cls._infer_correlation(joined, lambda_home, lambda_away)
@@ -145,6 +168,161 @@ class FootballProbabilitySimulator:
             source=source,
             warnings=warnings,
         )
+
+    @classmethod
+    def _load_project_seed_text(cls, config: Dict[str, Any]) -> str:
+        project_id = config.get("project_id")
+        if not project_id:
+            return ""
+        text_path = os.path.join(Config.UPLOAD_FOLDER, "projects", project_id, "extracted_text.txt")
+        if not os.path.exists(text_path):
+            return ""
+        try:
+            with open(text_path, "r", encoding="utf-8") as f:
+                return f.read()
+        except OSError:
+            return ""
+
+    @classmethod
+    def _extract_seed_json(cls, text: str) -> Optional[Dict[str, Any]]:
+        if not text:
+            return None
+        decoder = json.JSONDecoder()
+        search_from = 0
+        while True:
+            start = text.find("{", search_from)
+            if start == -1:
+                return None
+            try:
+                parsed, _ = decoder.raw_decode(text[start:])
+            except json.JSONDecodeError:
+                search_from = start + 1
+                continue
+            if isinstance(parsed, dict) and isinstance(parsed.get("teams"), dict):
+                return parsed
+            search_from = start + 1
+
+    @classmethod
+    def _extract_seed_inputs(
+        cls,
+        seed: Dict[str, Any],
+        samples: int,
+    ) -> Optional[FootballPredictionInputs]:
+        teams = seed.get("teams") or {}
+        home = teams.get("home") or {}
+        away = teams.get("away") or {}
+        home_team = str(home.get("name") or "").strip()
+        away_team = str(away.get("name") or "").strip()
+        if not home_team or not away_team:
+            return None
+
+        meta = seed.get("simulation_meta") or {}
+        explicit_home = cls._as_float(meta.get("lambda_home"))
+        explicit_away = cls._as_float(meta.get("lambda_away"))
+        if explicit_home is not None and explicit_away is not None:
+            lambda_home = explicit_home
+            lambda_away = explicit_away
+            source = "seed_simulation_meta_lambda"
+        else:
+            lambda_home, lambda_away = cls._calculate_lambdas_from_team_metrics(home, away)
+            source = "seed_team_metrics"
+
+        correlation = cls._extract_seed_correlation(seed)
+        seed_samples = cls._as_int(meta.get("runs") or seed.get("simulation_runs"))
+        return FootballPredictionInputs(
+            home_team=home_team,
+            away_team=away_team,
+            lambda_home=lambda_home,
+            lambda_away=lambda_away,
+            samples=seed_samples or samples,
+            correlation=correlation,
+            source=source,
+            warnings=[],
+        )
+
+    @classmethod
+    def _calculate_lambdas_from_team_metrics(
+        cls,
+        home: Dict[str, Any],
+        away: Dict[str, Any],
+    ) -> Tuple[float, float]:
+        home_xg = cls._as_float(home.get("xg_per_match"))
+        away_xg = cls._as_float(away.get("xg_per_match"))
+        home_xga = cls._as_float(home.get("xga_per_match"))
+        away_xga = cls._as_float(away.get("xga_per_match"))
+
+        if home_xg is not None and away_xga is not None:
+            lambda_home = (home_xg + away_xga) / 2.0
+        elif home_xg is not None:
+            lambda_home = home_xg
+        else:
+            lambda_home = 1.35
+
+        if away_xg is not None and home_xga is not None:
+            lambda_away = (away_xg + home_xga) / 2.0
+        elif away_xg is not None:
+            lambda_away = away_xg
+        else:
+            lambda_away = 1.15
+
+        home_attack = cls._as_float(home.get("attack_rating"))
+        away_attack = cls._as_float(away.get("attack_rating"))
+        home_defense = cls._as_float(home.get("defense_rating"))
+        away_defense = cls._as_float(away.get("defense_rating"))
+
+        if home_attack is not None and away_defense is not None:
+            lambda_home *= cls._rating_multiplier(home_attack, away_defense)
+        if away_attack is not None and home_defense is not None:
+            lambda_away *= cls._rating_multiplier(away_attack, home_defense)
+
+        home_elo = cls._as_float(home.get("elo_rating"))
+        away_elo = cls._as_float(away.get("elo_rating"))
+        if home_elo is not None and away_elo is not None:
+            elo_delta = max(-300.0, min(300.0, home_elo - away_elo))
+            lambda_home *= 1.0 + elo_delta / 4000.0
+            lambda_away *= 1.0 - elo_delta / 5000.0
+
+        return round(max(0.05, lambda_home), 3), round(max(0.05, lambda_away), 3)
+
+    @staticmethod
+    def _rating_multiplier(attack_rating: float, opponent_defense_rating: float) -> float:
+        attack_adj = (attack_rating - 80.0) / 100.0
+        defense_adj = (80.0 - opponent_defense_rating) / 140.0
+        return max(0.7, min(1.35, 1.0 + attack_adj + defense_adj))
+
+    @classmethod
+    def _extract_seed_correlation(cls, seed: Dict[str, Any]) -> float:
+        candidates = [
+            seed.get("correlation"),
+            seed.get("attack_defense_correlation"),
+            seed.get("goal_correlation"),
+            (seed.get("simulation_meta") or {}).get("correlation"),
+            (seed.get("model_parameters") or {}).get("correlation"),
+        ]
+        for value in candidates:
+            parsed = cls._as_float(value)
+            if parsed is not None:
+                return min(0.2, max(0.0, parsed))
+        return 0.03
+
+    @staticmethod
+    def _as_float(value: Any) -> Optional[float]:
+        if value is None:
+            return None
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return None
+
+    @staticmethod
+    def _as_int(value: Any) -> Optional[int]:
+        if value is None:
+            return None
+        try:
+            parsed = int(value)
+        except (TypeError, ValueError):
+            return None
+        return parsed if parsed > 0 else None
 
     @classmethod
     def _extract_teams(cls, config: Dict[str, Any], text: str) -> Tuple[str, str]:
