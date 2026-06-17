@@ -928,11 +928,25 @@ class ReportAgent:
         
         self.llm = llm_client or LLMClient()
         self.zep_tools = zep_tools or get_graph_factory().get_search_service(llm_client=llm_client)
-        self.computed_prediction = FootballProbabilitySimulator.simulate_from_simulation(
-            simulation_id=self.simulation_id,
-            simulation_requirement=self.prediction_scenario
-        )
-        
+
+        # Check if this looks like a football scenario before running the simulator
+        self.computed_prediction: Optional[Dict[str, Any]] = None
+        if FootballProbabilitySimulator.should_run(self.prediction_scenario):
+            logger.info(f"[FootballProbability] 场景检测为足球相关，开始提取比分概率...")
+            self.computed_prediction = FootballProbabilitySimulator.simulate_from_simulation(
+                simulation_id=self.simulation_id,
+                simulation_requirement=self.prediction_scenario
+            )
+            if self.computed_prediction:
+                logger.info(
+                    f"[FootballProbability] 成功提取 lambda_home={self.computed_prediction['inputs']['lambda_home']}, "
+                    f"lambda_away={self.computed_prediction['inputs']['lambda_away']}, source={self.computed_prediction['inputs']['source']}"
+                )
+            else:
+                logger.warning("[FootballProbability] 未能从模拟数据中提取到有效的 lambda 值，比分预测将被跳过")
+        else:
+            logger.info("[FootballProbability] 场景不包含足球关键词，跳过比分概率计算")
+
         # 工具定义
         self.tools = self._define_tools()
         
@@ -973,7 +987,9 @@ class ReportAgent:
                 snippets.append("Hot topics: " + ", ".join(str(topic) for topic in topics))
             if snippets:
                 return "\n".join(snippets[:8])
-            return "足球比赛概率预测报告"
+            # Fallback: use the original requirement text instead of a generic placeholder
+            logger.warning("[FootballProbability] simulation_config 中未找到 initial_posts/narrative/hot_topics，使用原始 simulation_requirement")
+            return text
 
         return text
 
